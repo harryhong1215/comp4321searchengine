@@ -1,6 +1,7 @@
 <component name="libraryTable">
-  <library name="jdbm-1.0">
+  <library name="lib">
     <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/htmlparser.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/jdbm-1.0.jar!/" />
     </CLASSES>
     <JAVADOC />
