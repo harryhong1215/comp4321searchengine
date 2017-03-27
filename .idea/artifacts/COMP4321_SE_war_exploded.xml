@@ -1,0 +1,17 @@
+<component name="ArtifactManager">
+  <artifact type="exploded-war" build-on-make="true" name="COMP4321_SE:war exploded">
+    <output-path>$PROJECT_DIR$/out/artifacts/COMP4321_SE_war_exploded</output-path>
+    <root id="root">
+      <element id="javaee-facet-resources" facet="COMP4321_SE/web/Web" />
+      <element id="directory" name="WEB-INF">
+        <element id="directory" name="classes">
+          <element id="module-output" name="COMP4321_SE" />
+        </element>
+        <element id="directory" name="lib">
+          <element id="library" level="project" name="jdbm-1.0" />
+          <element id="library" level="project" name="htmlparser" />
+        </element>
+      </element>
+    </root>
+  </artifact>
+</component>

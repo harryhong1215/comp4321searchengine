@@ -1,0 +1,14 @@
+<component name="ArtifactManager">
+  <artifact type="war" build-on-make="true" name="COMP4321_SE:war">
+    <output-path>$PROJECT_DIR$/out/artifacts/COMP4321_SE_war</output-path>
+    <root id="archive" name="COMP4321_SE_war.war">
+      <element id="directory" name="WEB-INF">
+        <element id="directory" name="lib">
+          <element id="library" level="project" name="htmlparser" />
+          <element id="library" level="project" name="jdbm-1.0" />
+        </element>
+      </element>
+      <element id="artifact" artifact-name="COMP4321_SE:war exploded" />
+    </root>
+  </artifact>
+</component>

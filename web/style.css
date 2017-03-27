@@ -1,0 +1,29 @@
+
+
+/*form*/
+
+.form-fill{
+    padding : 5em;
+}
+
+.form-submit{
+    align-content: center;
+}
+
+.title-search{
+    align-content: center;
+    padding : 20px;
+}
+
+.icon-size{
+    font-size: 2em;
+}
+
+.back-btn{
+
+    margin: 10px;
+}
+
+.con-pad{
+    padding:1em;
+}
