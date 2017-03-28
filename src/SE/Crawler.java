@@ -20,10 +20,10 @@ import org.htmlparser.NodeFilter;
 import org.htmlparser.tags.*;
 
 public class Crawler {
-    private static Vector<String>  Finishedlist = new Vector<String>();
-    private static Queue<String> temp = new LinkedList();
-    private static int MaximunPagenumber = 29; //index 30 pages
-    private static final String Databasepath = "data/database"; // Database path
+    private static Vector<String>  Finishedlist = new Vector<String>(); //store final output link
+    private static Queue<String> temp = new LinkedList(); //store child link
+    private static int MaximunPagenumber = 29; //number of grabbed pages
+    private static final String Databasepath = "data/database"; // ouput folder path
 
     public static int counter = 0; //  count how many pages is done;
 
@@ -31,7 +31,7 @@ public class Crawler {
 
     Crawler(String URL) {
         crawlerTarget_URL_String = URL;
-    }
+    } //constructor for set the url
 
     //get private url
     public String getUrl() {
@@ -43,110 +43,106 @@ public class Crawler {
     public Parser getParser() throws ParserException {
         try {
             return (new Parser(crawlerTarget_URL_String));
-        } catch (ParserException e) {
-            e.printStackTrace();
+        } catch (ParserException parserException) {
+            parserException.printStackTrace();
         }
         return null;
     }
 
-    //unknown
+    //store the word of title
     public Vector<String> extractTitle() throws ParserException {
+        //from an simplified chinese online tutorial
         Parser parser = getParser();
-
-        NodeFilter filter = new NodeClassFilter(TitleTag.class);
-        NodeList nodelist = parser.parse(filter);
-        String str = "";
-
-        for (int i = 0; i < nodelist.size(); i++) {
-            Node node = nodelist.elementAt(i);
+        NodeFilter nodeFilter = new NodeClassFilter(TitleTag.class);
+        NodeList nodeList = parser.parse(nodeFilter);
+        String stringTitle = "";//store title
+        for (int i = 0; i < nodeList.size(); i++) {
+            Node node = nodeList.elementAt(i);
             if (node instanceof TitleTag) {
-                TitleTag titletag = (TitleTag) node;
-                str = titletag.getTitle();
+                TitleTag titleTag = (TitleTag) node;
+                stringTitle = titleTag.getTitle();
             }
         }
-        String[] strsplit = str.split(" ");
-
-        Vector<String> title = new Vector<>();
-        for (int i = 0; i < strsplit.length; i++) title.add(strsplit[i]);
-
-        return title;
+        String[] stringSplit = stringTitle.split(" ");
+        Vector<String> titleList = new Vector<>();
+        for (int i = 0; i < stringSplit.length; i++){
+            titleList.add(stringSplit[i]);
+        }
+        return titleList;
     }
 
-
-    //unknown
+    //get last update
     public Date lastUpdate() throws IOException {
-        // String[] urlstr = url.split("://");
-        //URL inputLink = new URL("http", urlstr[1], 80, "/");
-
-        URL u = new URL(getUrl());
-        URLConnection linkConnect = u.openConnection();
-
-        Date date = new Date(linkConnect.getLastModified());
-        //SimpleDateFormat ft = new SimpleDateFormat("yyyy.MM.dd");
-        if (date == null)
-            date.setTime(linkConnect.getDate());
-        else if (date.toString().equals("1970-01-01"))
-            date.setTime(linkConnect.getDate());
-
+         URL urlLastUpdate = new URL(getUrl());
+        //reference from an online tutorial
+        //check the connection and get the date
+        URLConnection urlConnection = urlLastUpdate.openConnection();
+        Date date = new Date(urlConnection.getLastModified());
+        if (date == null){
+            date.setTime(urlConnection.getDate());
+        }else if (date.toString().equals("1970-01-01")) { //asd
+            date.setTime(urlConnection.getDate());
+        }
         return date;
     }
-
 
     //get all the words
     //from lab2 and parser
     public Vector<String> extractWords() throws ParserException {
         //from lab2
-        Vector<String> v_word = new Vector<String>();
-        StringBean sb = new StringBean();
+        Vector<String> wordList = new Vector<String>();
+        StringBean stringBean = new StringBean();
         //from html parser example
-        sb.setLinks(false);
-        sb.setReplaceNonBreakingSpaces(true);
-        sb.setCollapse(true);
-        sb.setURL(crawlerTarget_URL_String);
+        stringBean.setLinks(false);
+        stringBean.setReplaceNonBreakingSpaces(true);
+        stringBean.setCollapse(true);
+        stringBean.setURL(crawlerTarget_URL_String);
         //from lab2
-        String s = sb.getStrings();
-        s = s.replaceAll("[,:!/.%|()-+&^#@*']", "");
-        StringTokenizer st = new StringTokenizer(s);
-        while (st.hasMoreTokens())
-            v_word.add(st.nextToken());
-        return v_word;
+        String stringTemp = stringBean.getStrings();//change stringbean to string
+        stringTemp = stringTemp.replaceAll("[,:!/.%|()-+&^#@*']", "");//delete the useless symbol
+        StringTokenizer stringTokenizer = new StringTokenizer(stringTemp);//chop word
+        while (stringTokenizer.hasMoreTokens())
+            wordList.add(stringTokenizer.nextToken());
+        return wordList;
     }
-
 
     //calculate the page size
     //from oracle
     public int getPageSize() throws IOException {
 
-        URL inputLink = new URL(crawlerTarget_URL_String);
-        URLConnection linkConnect = inputLink.openConnection();
-        BufferedReader newIn = new BufferedReader(new InputStreamReader(linkConnect.getInputStream()));
-        String inputln, temp = "";
+        URL urlPage = new URL(crawlerTarget_URL_String);
+        URLConnection urlConnection = urlPage.openConnection();
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+        String stringTemp ="";
+        String stringCounter ="";
 
-        while ((inputln = newIn.readLine()) != null) {
-            temp += inputln;
+        while ((stringTemp = bufferedReader.readLine()) != null) {
+            stringCounter += stringTemp;
         }
 
-        newIn.close();
-        return temp.length();
+        bufferedReader.close();
+        return stringCounter.length();
     }
 
     //get link in page
     //from lab2
     public Vector<String> extractLinks() throws ParserException {
         //from lab2
-        Vector<String> result = new Vector<String>();
+        
         LinkBean bean = new LinkBean();
         bean.setURL(crawlerTarget_URL_String);
+
         URL[] urls = bean.getLinks();
+        Vector<String> result = new Vector<String>();
         for (URL s : urls) {
             result.add(s.toString());
         }
         return result;
     }
 
-    public static void grab(String url) throws  IOException, ParserException {
+    public static void grab(String url) throws IOException, ParserException {
 
-        if (Finishedlist.size() < MaximunPagenumber) {
+        if ((Finishedlist.size() < MaximunPagenumber) == true) {
 
             Indexer indexer = new Indexer(Databasepath, url);
             Crawler crawler = new Crawler(url);
@@ -156,19 +152,23 @@ public class Crawler {
                 temp.remove();
             }
 
-            //get Lastmodificationdate of the url
+            //get Last modification date of the url
             java.util.Date Lastmodificationdate = crawler.lastUpdate();
 
             //check lastupdate of the url
             if (indexer.pageLastModDateIsUpdated(Lastmodificationdate)) {
 
-                //crawlwer part
+                //crawler part
                 Vector<String> storedchildlinks = crawler.extractLinks();
-                for (int i = 0; i < storedchildlinks.size(); i++) {
-                    temp.add(storedchildlinks.elementAt(i));
+
+                //add all the child link into temp
+                int tempcounter = 0 ;
+                while (tempcounter < storedchildlinks.size()){
+                    temp.add(storedchildlinks.elementAt(tempcounter));
+                    tempcounter ++ ;
                 }
 
-               //count how many pages is done
+                //count how many pages is done
                 System.out.println("This is page " + ++counter);
 
                 //get title of the url
@@ -191,27 +191,47 @@ public class Crawler {
                 System.out.println("Child links: "+ storedchildlinks);
                 System.out.println("-----------------------------------------------------------------------------------------------------");
 
+                //convert title vector to String
+                StringBuilder builder = new StringBuilder();
+                String prefix = "";
+                int tempcounter0 = 0;
+                while (tempcounter0 < pagetitle.size()){
+                    String pagetitletemp = pagetitle.get(tempcounter0);
+                    builder.append(prefix);
+                    prefix = " ";
+                    builder.append(pagetitletemp);
+                    tempcounter0 ++ ;
+                }
+                String titleStr = builder.toString();
+
                 //indexer part
+                //insert Words and title into indexer
                 indexer.insertWords(storedwords);
                 indexer.insertTitle(pagetitle);
 
-               //convert title vector to String
-                 String titleStr = pagetitle.toString();
-
+                //insert Page Property with title, url, last modification date and size of page into indexer
                 indexer.insertPageProperty(titleStr, url, Lastmodificationdate, sizeofpage);
 
-                for (String childUrl : storedchildlinks) {
+                //insert childUrl into indexer
+                int tempcounter1 = 0;
+                while (tempcounter1 < storedchildlinks.size()){
+                    String childUrl ;
+                    childUrl = storedchildlinks.elementAt(tempcounter1);
                     indexer.insertChildPage(childUrl);
+                    tempcounter1 ++ ;
                 }
 
+                //add url into finishedlist if it does not contain a url
                 if(!Finishedlist.contains(url))
                 {
                     Finishedlist.add(url);
                 }
             }
 
+            //call indexer finalize function
             indexer.finalize();
 
+            //recursion until temp equal null, if exception happen, do the next url
             if (temp.peek() != null) {
                 try {
                     grab(temp.peek());
@@ -230,17 +250,15 @@ public class Crawler {
         try {
             System.out.println("Spider Start");
             grab("http://www.cse.ust.hk/");
-        }catch (IOException e) {
+        } catch (IOException e) {
             System.out.println("IOException, Please restart the program");
         } catch (ParserException e) {
             System.out.println("ParserException, Please restart the program");
-        }finally{
+        } finally {
             System.out.printf("PROGRAM RUN FOR %s s\n", (System.currentTimeMillis() - startTime) / 1000d);
             System.out.println("Spider End");
         }
-
     }
-
 }
 
 
