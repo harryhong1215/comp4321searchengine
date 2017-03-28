@@ -4,42 +4,67 @@ import jdbm.RecordManager;
 import jdbm.RecordManagerFactory;
 
 import java.io.*;
+import java.util.Iterator;
 import java.util.Vector;
 
 
 public class Outputtxt {
     public void output() {
-        System.out.println("No output in the console, please get the result from spider_result.txt");
-        try {
-            PrintStream out = new PrintStream(new FileOutputStream("spider_result.txt"));
-            System.setOut(out);
-        }catch (FileNotFoundException e){
-            System.out.println("FileNotFoundException, please restart the program");
-        }
+
+        System.out.println("The test program is started");
+        System.out.println("Please open the spider_result.txt to check the result after the process finished");
 
         try{
+            PrintStream out = new PrintStream(new FileOutputStream("spider_result.txt"));
+            System.setOut(out); //open a file call spider_result
+
             // load the db
             RecordManager recman = RecordManagerFactory.createRecordManager("data/database");
 
             // load indexes
-            ForwardIndex fIndex = new ForwardIndex(recman, "forwardIndex");
-            MappingIndex urlIndex = new MappingIndex(recman, "urlMappingIndex");
-            PageProperty properyIndex = new PageProperty(recman, "pagePropertyIndex");
-            ParentChildIndex parentChildIndex = new ParentChildIndex(recman, "parentChildIndex");
+            ForwardIndex  forwardIndex = new ForwardIndex(recman, "forwardIndex");
+            MappingIndex mappingIndex = new MappingIndex(recman, "urlMappingIndex");
+            PageProperty  pagepropertyIndex = new PageProperty(recman, "pagePropertyIndex");
+            ParentChildIndex parentchildIndex = new ParentChildIndex(recman, "parentChildIndex");
 
-            Vector<Integer> urlList = fIndex.getExistingPageIdList();
-            for (int pageID : urlList) {
-                Properties p = properyIndex.get(pageID);
-                if (p == null) continue;
-                System.out.println(p.getTitle());
-                System.out.println(urlIndex.getKey(pageID));
-                properyIndex.printWithPageID(pageID);
-                fIndex.printPageTermFrequency(pageID);
-                parentChildIndex.printWithPageID(pageID);
-                System.out.println("------------------------------");
+            //load the existing page list into UrList
+            Vector<Integer> UrlList = forwardIndex.getExistingPageIdList();
+
+            //Write all the data into spider_result.txt by using for loop
+            for (int pageID : UrlList) {
+                Properties characteristic = pagepropertyIndex.get(pageID);
+                if (characteristic == null) {
+                    continue;
+                }
+                System.out.println(characteristic.getTitle());
+                System.out.println(mappingIndex.getKey(pageID));
+                pagepropertyIndex.printWithPageID(pageID);
+                forwardIndex.printPageTermFrequency(pageID);
+                parentchildIndex.printWithPageID(pageID);
+                System.out.println("---------------------------------");
             }
+//            failed one
+//            Iterator<> sizeofUrlist = UrlList.iterator();
+//            int pageid = 0;
+//            while(sizeofUrlist.hasNext()){
+//                sizeofUrlist.next();
+//                Properties characteristic = pagepropertyIndex.get(pageid);
+//                if (characteristic == null) {
+//                    continue;
+//                }
+//                System.out.println(characteristic.getTitle());
+//                System.out.println(mappingIndex.getKey(pageid));
+//                pagepropertyIndex.printWithPageID(pageid);
+//                forwardIndex.printPageTermFrequency(pageid);
+//                parentchildIndex.printWithPageID(pageid);
+//                System.out.println("---------------------------------");
+//                pageid++;
+//                System.out.println(pageid);
+//                //sizeofUrlist.next();
+//            }
+
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("IOException, please restart the program"); // using for catch exception
         }
 
     }
