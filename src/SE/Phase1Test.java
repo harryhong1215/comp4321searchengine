@@ -12,20 +12,16 @@ import java.io.InputStreamReader;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 
-
-/**
- * Created by opw on 4/8/16.
- */
 public class Phase1Test {
     public static void main(String[] args) throws IOException {
 
-        System.out.println("No output in the console, please get the result from spider_result.txt");
+        System.out.println("Please read the result at spider_result.txt");
 
         PrintStream out = new PrintStream(new FileOutputStream("spider_result.txt"));
         System.setOut(out);
 
         try {
-            // load the db
+            // load the database with the database path
             RecordManager recman = RecordManagerFactory.createRecordManager("data/database");
 
             // load indexes
@@ -49,7 +45,7 @@ public class Phase1Test {
 
 
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("IOException, Please restart the program");
         }
 
 

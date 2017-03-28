@@ -9,11 +9,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 
-
-/**
- * Created by opw on 3/4/2016.
- */
-
 class Properties implements Serializable {
     private String title;
     private String url;
@@ -107,26 +102,10 @@ public class PageProperty {
         return (Properties) hashtable.get(key);
     }
 
-    public void delete(int pageID) throws IOException {
-        String key = Integer.toString(pageID);
-        hashtable.remove(key);
-    }
-
     public void finalize() throws IOException
     {
         recman.commit();
-//        recman.close();
-    }
-
-    public void printAll() throws IOException
-    {
-        FastIterator iter = hashtable.keys();
-
-        String key;
-        while( (key = (String)iter.next())!=null)
-        {
-            System.out.printf("KEY= %s, ID= %s\n" , key, hashtable.get(key));
-        }
+        recman.close();
     }
 
 
@@ -135,33 +114,5 @@ public class PageProperty {
         String key = Integer.toString(pageID);
         Properties ppt = (Properties) hashtable.get(key);
         System.out.println(ppt.getModDate() + " Size:" +ppt.getSize());
-    }
-
-    public Date getModDate(int pageID) throws IOException
-    {
-        String key = Integer.toString(pageID);
-        Properties ppt = (Properties) hashtable.get(key);
-        return ppt.getModDate();
-    }
-
-    public int getPageSize(int pageID) throws IOException
-    {
-        String key = Integer.toString(pageID);
-        Properties ppt = (Properties) hashtable.get(key);
-        return ppt.getSize();
-    }
-
-    public String getTitle(int pageID) throws IOException
-    {
-        String key = Integer.toString(pageID);
-        Properties ppt = (Properties) hashtable.get(key);
-        return ppt.getTitle();
-    }
-
-    public String getUrl(int pageID) throws IOException
-    {
-        String key = Integer.toString(pageID);
-        Properties ppt = (Properties) hashtable.get(key);
-        return ppt.getUrl();
     }
 }

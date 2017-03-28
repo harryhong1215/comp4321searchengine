@@ -1,13 +1,14 @@
 package SE;
 
+//java
 import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.*;
 import java.net.*;
 import java.sql.Date;
-//java
 
+//html parser
 import org.htmlparser.Parser;
 import org.htmlparser.util.ParserException;
 import org.htmlparser.filters.NodeClassFilter;
@@ -17,17 +18,16 @@ import org.htmlparser.util.NodeList;
 import org.htmlparser.Node;
 import org.htmlparser.NodeFilter;
 import org.htmlparser.tags.*;
-//html parser
 
 public class Crawler {
     private static Vector<String>  Finishedlist = new Vector<String>();
-    private static Queue<String> task = new LinkedList();
-    private static int MaximunPagenumber=30;
-    private static final String Databasepath = "data/database";
+    private static Queue<String> temp = new LinkedList();
+    private static int MaximunPagenumber = 29; //index 30 pages
+    private static final String Databasepath = "data/database"; // Database path
 
-    public static int counter=0;
+    public static int counter = 0; //  count how many pages is done;
 
-    private String crawlerTarget_URL_String;//store the link for crawl
+    private String crawlerTarget_URL_String; //store the link for crawl
 
     Crawler(String URL) {
         crawlerTarget_URL_String = URL;
@@ -143,16 +143,17 @@ public class Crawler {
         }
         return result;
     }
-    public static void fetch(String url) throws ParserException, IOException {
+
+    public static void grab(String url) throws  IOException, ParserException {
 
         if (Finishedlist.size() < MaximunPagenumber) {
 
             Indexer indexer = new Indexer(Databasepath, url);
             Crawler crawler = new Crawler(url);
 
-            if (task.peek() != null)
+            if (temp.peek() != null)
             {
-                task.remove();
+                temp.remove();
             }
 
             //get Lastmodificationdate of the url
@@ -164,9 +165,12 @@ public class Crawler {
                 //crawlwer part
                 Vector<String> storedchildlinks = crawler.extractLinks();
                 for (int i = 0; i < storedchildlinks.size(); i++) {
-                    task.add(storedchildlinks.elementAt(i));
+                    temp.add(storedchildlinks.elementAt(i));
                 }
-                System.out.println(++counter);
+
+               //count how many pages is done
+                System.out.println("This is page " + ++counter);
+
                 //get title of the url
                 Vector<String> pagetitle = crawler.extractTitle();
                 System.out.println("Pagetitle: " + pagetitle);
@@ -191,11 +195,8 @@ public class Crawler {
                 indexer.insertWords(storedwords);
                 indexer.insertTitle(pagetitle);
 
-                // convert title vector to String
-//                StringBuilder temp = new StringBuilder();
-                //   String titleStr = temp.toString();
-
-                String titleStr = null;
+               //convert title vector to String
+                 String titleStr = pagetitle.toString();
 
                 indexer.insertPageProperty(titleStr, url, Lastmodificationdate, sizeofpage);
 
@@ -209,15 +210,14 @@ public class Crawler {
                 }
             }
 
-
             indexer.finalize();
 
-            if (task.peek() != null) {
+            if (temp.peek() != null) {
                 try {
-                    fetch(task.peek());
+                    grab(temp.peek());
                 } catch (Exception e) {
-                    task.remove();
-                    fetch(task.peek());
+                    temp.remove();
+                    grab(temp.peek());
                 }
             }
         }
@@ -228,16 +228,17 @@ public class Crawler {
         final long startTime = System.currentTimeMillis();
 
         try {
-            //System.out.println("111");
-            fetch("http://www.cse.ust.hk/");
-            //System.out.println("111");
+            System.out.println("Spider Start");
+            grab("http://www.cse.ust.hk/");
+        }catch (IOException e) {
+            System.out.println("IOException, Please restart the program");
         } catch (ParserException e) {
-            System.out.println("ParserException, Please restart the program and input the value again");
-        } catch (IOException e) {
-            System.out.println("IOException, Please restart the program and input the value again");
+            System.out.println("ParserException, Please restart the program");
+        }finally{
+            System.out.printf("PROGRAM RUN FOR %s s\n", (System.currentTimeMillis() - startTime) / 1000d);
+            System.out.println("Spider End");
         }
-        System.out.println("SPIDER END");
-        System.out.printf("PROGRAM RUN FOR %s s\n", (System.currentTimeMillis() - startTime) / 1000d);
+
     }
 
 }
