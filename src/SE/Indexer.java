@@ -8,10 +8,6 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Vector;
 
-/**
- * Created by opw on 4/6/16.
- */
-
 public class Indexer {
     // Open Global Mapping Index (pageid & docid mapping)
     // Remove stop words and do stemming
@@ -33,13 +29,12 @@ public class Indexer {
     private static String url;
     private static int pageID;
 
-    // dbRootPath = "data/DATABASE_NAME"
     public Indexer(String dbRootPath, String url) throws IOException
     {
-        // initial main database
+        // create main database
         recman = RecordManagerFactory.createRecordManager(dbRootPath);
 
-        // initial supporting index db
+        // initialization of all required index for the database
         urlIndex = new MappingIndex(recman, "urlMappingIndex");
         wordIndex = new MappingIndex(recman, "wordMappingIndex");
         titleInvertedIndex = new InvertedIndex(recman, "titleInvertedIndex");
@@ -53,99 +48,104 @@ public class Indexer {
 
         this.url = url;
         urlIndex.insert(url);
-//        urlIndex.finalize();
         this.pageID = urlIndex.getValue(url);
-//        System.out.printf("Indexer: url:'%s' mapping to '%s' \n", url, urlIndex.getValue(url));
     }
 
-    // Helper function: remove stop words + stemming, insert to mapping index and return word ID, wordID: -1 = stop word
-    private int insertWordToMappingIndex(String word)
+    // perform stopword analysis and remove stopword -> perform stemming -> insert word to the mapping index
+     private int insertWordToMappingIndex(String word)
     {
+        // check if the word is empty
         if(word == null || word.length() <= 0 || word.equals(""))
         {
             System.out.println("ERROR: Insert Title invalid word");
             return -2;
         }
-        // skip stop words
+
+        // check if the word is a stop
         if (stopStem.isStopWord(word))
         {
-            //System.out.printf("\"%s\" is a stop word \n" , word);
             return -1;
         }
 
-        // retrieve the stemmed word
+        // obtain stemmed word
         String stem = stopStem.stem(word);
-        //System.out.println("stem: \"" + stem +"\"");
         if(stem == null || stem.length() <= 0 || stem.equals(""))
         {
-//            System.out.println("ERROR: null char");
             return -2;
         }
 
         try {
             // insert into word mapping indexer
             wordIndex.insert(stem);
-
             int stemWordID = wordIndex.getValue(stem);
             return stemWordID;
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        return -3;  // ERROR
+        return -3;
     }
 
-    // Remove stop word, stemming, insert to forward indexer and inverted index
+    // remove stopword and stem -> inserted to inverted index and use forward index
     public void insertWords(Vector<String> words) throws IOException
     {
         if(words.isEmpty())
             return;
 
-        forwardIndex.delete(this.pageID);   // clear the old content first
+        // delete the previous content in forward index
+        forwardIndex.delete(this.pageID);
 
-        // loop through the input word Vector
-        for(int wordPos = 0; wordPos < words.size(); wordPos ++)
+        // scan through all element in the wordlist
+        int wordPos = 0;
+        while(wordPos < words.size())
         {
             int wordID = insertWordToMappingIndex(words.get(wordPos));    // put new word to mapping index
 
-            // ignore stop word
+            // discard all the not suitable word
             if(wordID > 0)
             {
-                forwardIndex.insert(this.pageID, wordID);
                 bodyInvertedIndex.insert(wordID, this.pageID, wordPos);
+                forwardIndex.insert(this.pageID, wordID);
             }
+            wordPos++;
         }
 
-        // calcualte and insert the max tf to forward index
+        // Calculate the maximum term frequency and insert it to forwardIndex
         forwardIndex.calculateMaxTermFrequency(this.pageID);
     }
 
-    // insert title words to inverted file
+    // insert title to inverted index file to store the detail
     public void insertTitle(Vector<String> words) throws IOException
     {
-        if(words.isEmpty())
-            return;
-
-        // loop through the input word Vector
-        for(int wordPos = 0; wordPos < words.size(); wordPos ++)
+        if(!words.isEmpty())
         {
-            int wordID = insertWordToMappingIndex(words.get(wordPos));    // put new word to mapping index
-
-            // ignore stop word
-            if(wordID > 0)
+            // scan through all element in the wordlist
+            int wordPos = 0;
+            while(wordPos < words.size())
             {
-                titleInvertedIndex.insert(wordID, this.pageID, wordPos);
+                // retrieve index of the of the title by insert word to mapping index
+                int wordID = insertWordToMappingIndex(words.get(wordPos));
+
+                // insert the inverted index if it is not stopword
+                if(wordID > 0)
+                {
+                    titleInvertedIndex.insert(wordID, this.pageID, wordPos);
+                }
+                wordPos++;
             }
+        }
+        else {
+            return;
         }
     }
 
-    // insert properties into properyIndex
+    // insert all properties of the page to property index
     public void insertPageProperty(String title, String url, Date modDate, int size) throws IOException
     {
         properyIndex.insert(this.pageID, title, url, modDate, size);
     }
 
-    // return true if page last mod date is changed -> need to crawl the page again
+    // check if the page has been updated and require to fetch again
     public boolean pageLastModDateIsUpdated(Date newDate) throws IOException
     {
         if(properyIndex.get(this.pageID) == null)

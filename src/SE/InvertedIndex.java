@@ -1,34 +1,23 @@
-package SE;/* --
-COMP336 Lab1 Exercise
-Student Name:
-Student ID:
-Section:
-Email:
-*/
+package SE;
 
 import jdbm.RecordManager;
-import jdbm.helper.IntegerComparator;
 import jdbm.htree.HTree;
 import jdbm.helper.FastIterator;
-import jdk.nashorn.internal.ir.IdentNode;
 
 import java.util.*;
-import java.util.ArrayList;
 import java.io.IOException;
 import java.io.Serializable;
 
+// In this system, it is for the position of the exsistance of word in the document
 class Posting implements Serializable
 {
-    //  wordID -> {pageID, [word position]}
     private int pageID;
     private Vector<Integer> wordPosList;
     private static final long serialVersionUID = 1L;    // define serialVersionUID
-//    private int maxTermFrequency;
 
     public Posting(int pageID) {
         this.pageID = pageID;
         this.wordPosList = new Vector<Integer>();
-//        this.maxTermFrequency = 0;
     }
 
     @Override
@@ -37,7 +26,6 @@ class Posting implements Serializable
                 "pageID=" + pageID +
                 ", wordPosList=" + wordPosList +
                 '}' ;
-//                " maxtf= " +maxTermFrequency;
     }
 
     public boolean insert(int wordPos) {
@@ -81,7 +69,6 @@ public class InvertedIndex
 {
     private RecordManager recman;
     private HTree hashtable;
-//    private static final String DB_ROOT_FOLDER = "data/";
 
     InvertedIndex(RecordManager recordmanager, String objectname) throws IOException
     {
@@ -90,7 +77,7 @@ public class InvertedIndex
 
         if (recid != 0)
         {
-            // if hashtable exist, load it
+            // Load existing has table if exist
             hashtable = HTree.load(recman, recid);
         }
         else
@@ -104,15 +91,15 @@ public class InvertedIndex
     public void finalize() throws IOException
     {
         recman.commit();
-//        recman.close();
     }
 
-    //  wordID -> {pageID, [word position]}
+    //  insert the data pair into the hash map with wordID -> [pageID, word posistion]
     public void insert(int wordID, int pageID, int wordPos) throws IOException
     {
-        // pageID -> wordPosList
+        // Create a hash key for the position of word in hash table
         String key = Integer.toString(wordID);
 
+        // if there is no previous exsistance of word before
         if (hashtable.get(key) == null)
         {
             // initial new map and wordPosList
@@ -120,31 +107,35 @@ public class InvertedIndex
             p.insert(wordPos);
 
             HashMap<Integer, Posting> map = new HashMap<Integer, Posting>();
+            // link hash map with pageID
             map.put(pageID, p);
+            // put the hash map into correlated hash table position
             hashtable.put(key, map);
         }
         else
         {
-            // append the new word pos to existing word posting list
+            // if word already exist
             HashMap<Integer, Posting> map = (HashMap<Integer, Posting>) hashtable.get(key);
             if(contains(wordID, pageID))
             {
-//                System.out.println("New Pos with existing pageid");
                 // get the posting of specific pageID
                 Posting posting = map.get(pageID);
 
-                // ensure unique insert of wordPos
-                if(! posting.contains(wordPos))
+                // ensure the insertion is unique
+                if(posting.contains(wordPos))
+                {
+                    return;
+                }
+                else
                 {
                     posting.insert(wordPos);
-//                    hashtable.remove(key);
                     hashtable.put(key, map);
                 }
 
             }
             else
             {
-                // have the wordID, but new pageID
+                // merge the old posting with new wordPos and put into a new position in map with new pageID
                 Posting posting = new Posting(pageID);
                 posting.insert(wordPos);
                 map.put(pageID, posting);
@@ -153,15 +144,19 @@ public class InvertedIndex
         }
     }
 
+    // check if the hash map contain the specific word's posting list
     public boolean contains(int wordID, int pageID) throws IOException
     {
         String key = Integer.toString(wordID);
-        if (hashtable.get(key) != null)
+        if (hashtable.get(key) == null)
+        {
+            return false;
+        }
+        else
         {
             HashMap<Integer, Posting> map = (HashMap<Integer, Posting>) hashtable.get(key);
             return map.containsKey(pageID);
         }
-        return false;
     }
 
     public boolean delete(int wordID) throws IOException
@@ -218,18 +213,6 @@ public class InvertedIndex
         return (HashMap<Integer, Posting>) hashtable.get(key);
     }
 
-    /*
-    public void setMaxTermFrequency(int wordID, int pageID, int maxtf) throws IOException
-    {
-        String key = Integer.toString(wordID);
-        if (hashtable.get(key) == null)
-            return;
-        HashMap<Integer, Posting> map = (HashMap<Integer, Posting>) hashtable.get(key);
-        Posting posting = map.get(pageID);
-        posting.setMaxtf(maxtf);
-    }
-    */
-
     // number of documents containing the term wordID
     public int getDocumentFrequency(int wordID) throws IOException
     {
@@ -252,23 +235,20 @@ public class InvertedIndex
     }
 
 
-
+    // Print element in hashtable
     public void printAll() throws IOException
     {
-        // Print all the data in the hashtable
-        // ADD YOUR CODES HERE
-
-        // iterate through all keys
+        // From Lab2 solution
         FastIterator iter = hashtable.keys();
 
         String key;
         System.out.println("Inverted Index:");
 
-        while( (key = (String)iter.next())!=null)
+        while( (key = (String)iter.next()) != null)
         {
-            // get and print the content of each key
+            // Retrieve and print the element
             HashMap<Integer, Posting> map = (HashMap<Integer, Posting>) hashtable.get(key);
-            Set<Integer> keys = map.keySet();  //get all keys
+            Set<Integer> keys = map.keySet();  // Obtain all key for get the element in hash map
             for(Integer i: keys)
             {
                 System.out.println("wordID:" + key + " " + map.get(i));

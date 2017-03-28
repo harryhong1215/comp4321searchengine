@@ -7,11 +7,6 @@ import jdbm.htree.HTree;
 import java.io.IOException;
 import java.util.Vector;
 
-
-/**
- * Created by opw on 4/6/16.
- */
-
 // ParentPageID -> (ChildPageID1 ... ChildPageIDN)
 // ChildPageID -> (ParentPageID1 ... ParentPageIDN)
 

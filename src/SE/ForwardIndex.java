@@ -7,11 +7,6 @@ import jdbm.htree.HTree;
 import java.io.IOException;
 import java.util.*;
 
-
-/**
- * Created by opw on 4/6/16.
- */
-
 // PageID -> (WordID1 ... wordIDN)
 public class ForwardIndex {
 

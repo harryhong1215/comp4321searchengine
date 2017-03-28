@@ -14,7 +14,7 @@ public class StopStem
 	private java.util.HashSet stopWords;
 	public boolean isStopWord(String str)
 	{
-		return stopWords.contains(str);	
+		return stopWords.contains(str);
 	}
 	public StopStem(String str)
 	{
@@ -36,7 +36,7 @@ public class StopStem
 		} catch (Exception e){
 			System.err.println("ERROR: " + e.getMessage());
 		}
-		
+
 	}
 	public String stem(String str)
 	{

@@ -9,9 +9,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Vector;
 
-/**
- * Created by opw on 3/4/2016.
- */
 public class MappingIndex {
     private String key;
     private int value;
