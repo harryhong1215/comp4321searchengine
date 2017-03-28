@@ -1,10 +1,12 @@
 package StruggleSearchEngine;
 
 import jdbm.RecordManager;
+import jdbm.RecordManagerFactory;
 import jdbm.helper.FastIterator;
 import jdbm.htree.HTree;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Vector;
 
 public class MappingIndex {
@@ -22,26 +24,17 @@ public class MappingIndex {
 
     public MappingIndex(RecordManager recordmanager, String objectname) throws IOException
     {
-//        recman = RecordManagerFactory.createRecordManager(DB_ROOT_FOLDER + recordmanager);
         recman = recordmanager;
         recid = recman.getNamedObject(objectname);
         recid_r = recman.getNamedObject(objectname+"Reverted");
 
         lastIDRecid = recman.getNamedObject(objectname+"ID");
 
-        if (recid != 0)
+        if (recid <= 0 )
         {
-            // if hashtable exist, load it
-            hashtable = HTree.load(recman, recid);
-            hashtable_r = HTree.load(recman, recid_r);
-
-            lastID = (Integer)recman.fetch(lastIDRecid);
-        }
-        else
-        {
-            //for test
-            //System.out.println("Initial hashtable");
-            // initial hashtables
+            //for test and debug
+            //System.out.println("Initial hastable");
+            // create a new hashtable
             hashtable = HTree.createInstance(recman);
             hashtable_r = HTree.createInstance(recman);
 
@@ -50,6 +43,13 @@ public class MappingIndex {
             recman.setNamedObject(objectname+"ID", recman.insert(new Integer(0)));
             lastIDRecid = recman.getNamedObject(objectname+"ID");
             lastID = 0;
+        }
+        else
+        {
+            // load the existing hashtable if exist
+            hashtable = HTree.load(recman, recid);
+            hashtable_r = HTree.load(recman, recid_r);
+            lastID = (Integer)recman.fetch(lastIDRecid);
         }
     }
 
@@ -65,85 +65,70 @@ public class MappingIndex {
         return lastID;
     }
 
+    // insert the data into the hash tree according to the key and lastID
     public boolean insert(String key) throws IOException
     {
         if(hashtable.get(key) == null)
         {
-            // increase the last id before insert
             lastID++;
             hashtable.put(key, lastID);
             hashtable_r.put(lastID, key);
-            recman.update(lastIDRecid, new Integer(lastID)); // write the last id to db
-//            recman.commit();
-
+            // write the lastID to the database
+            recman.update(lastIDRecid, new Integer(lastID));
             return true;
         }
         return false;
     }
 
-    // -1 : value not found
+    // check if document's ID is exist
     public int getValue(String key) throws IOException
     {
-        if(hashtable.get(key) != null)
-            return (int)hashtable.get(key);
-        else
+        if(hashtable.get(key) == null) {
             return -1;
+        }
+        else {
+            return (int) hashtable.get(key);
+        }
     }
 
-    // -1 : value not found
+    // check if the document is exist
     public String getKey(int value) throws IOException
     {
-//        String valueStr = Integer.toString(value);
-        if(hashtable_r.get(value) != null)
+        if(hashtable_r.get(value) == null) {
+            return "No such string is exist";
+        }
+        else {
             return (String) hashtable_r.get(value);
-        else
-            return "NO STRING";
+        }
     }
 
-//    public String getKey(int value) throws IOException
-//    {
-//        // iterate through all keys
-//        FastIterator iter = hashtable.keys();
-//        String key;
-//        while( (key = (String)iter.next())!=null)
-//        {
-//            if(hashtable.get(key) != null && (int) hashtable.get(key) == value)
-//            {
-//                return key;
-//            }
-//        }
-//        return null;
-//    }
 
     public void finalize() throws IOException
     {
-//        System.out.println(lastIDRecid);
-        recman.update(lastIDRecid, new Integer(lastID)); // write the last id to db
+        recman.update(lastIDRecid, new Integer(lastID));
         recman.commit();
-//        recman.close();
     }
 
+    // retrieve the list of URL
     public Vector<String> getUrlList() throws IOException
     {
-        FastIterator iter = hashtable.keys();
-        Vector<String> v = new Vector<String>();
-        while( (key = (String)iter.next())!=null)
+        FastIterator keyIterator = hashtable.keys();
+        Vector<String> tempVector = new Vector<String>();
+        while( (key = (String)keyIterator.next())!=null)
         {
-            v.add(key);
-//            System.out.printf("KEY= %s, ID= %s\n" , key, hashtable.get(key));
+            tempVector.add(key);
         }
-        return v;
+        return tempVector;
     }
+
+    // print all the data in the hashtable
     public void printAll() throws IOException
     {
-        // Print all the data in the hashtable
-
-        // iterate through all keys
-        FastIterator iter = hashtable.keys();
+        FastIterator keyIterator = hashtable.keys();
         String key;
-        while( (key = (String)iter.next())!=null)
+        while( (key = (String)keyIterator.next())!=null)
         {
-            System.out.printf("KEY= %s, ID= %s\n" , key, hashtable.get(key));
+            System.out.printf("Key = %s, ID = %s\n" , key, hashtable.get(key));
         }
 
     }
